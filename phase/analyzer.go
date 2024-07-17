@@ -6,7 +6,6 @@ import (
 
 	"github.com/buildpacks/lifecycle/api"
 	"github.com/buildpacks/lifecycle/image"
-	"github.com/buildpacks/lifecycle/internal/fsutil"
 	"github.com/buildpacks/lifecycle/internal/layer"
 	"github.com/buildpacks/lifecycle/log"
 	"github.com/buildpacks/lifecycle/platform"
@@ -43,7 +42,7 @@ func (f *ConnectedFactory) NewAnalyzer(inputs platform.LifecycleInputs, logger l
 	}
 
 	var err error
-	if analyzer.PreviousImage, err = f.getPreviousImage(inputs.PreviousImageRef, inputs.LaunchCacheDir); err != nil {
+	if analyzer.PreviousImage, err = f.getPreviousImage(inputs.PreviousImageRef, inputs.LaunchCacheDir, logger); err != nil {
 		return nil, err
 	}
 	if analyzer.RunImage, err = f.getRunImage(inputs.RunImageRef); err != nil {
@@ -88,7 +87,7 @@ func (a *Analyzer) Analyze() (files.Analyzed, error) {
 				return files.Analyzed{}, errors.Wrap(err, "unpacking metadata from image")
 			}
 			if atm.OS == "" {
-				platform.GetTargetOSFromFileSystem(&fsutil.Detect{}, atm, a.Logger)
+				return files.Analyzed{}, errors.New("failed to find OS in run image config")
 			}
 		}
 	}

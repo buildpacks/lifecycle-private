@@ -332,6 +332,7 @@ func testAnalyzer(platformAPI string) func(t *testing.T, when spec.G, it spec.S)
 
 		it.Before(func() {
 			var err error
+			discardLogger := log.Logger{Handler: &discard.Handler{}}
 
 			tmpDir, err = os.MkdirTemp("", "analyzer-tests")
 			h.AssertNil(t, err)
@@ -342,14 +343,12 @@ func testAnalyzer(platformAPI string) func(t *testing.T, when spec.G, it spec.S)
 			cacheDir, err = os.MkdirTemp("", "some-cache-dir")
 			h.AssertNil(t, err)
 
-			testCache, err = cache.NewVolumeCache(cacheDir)
+			testCache, err = cache.NewVolumeCache(cacheDir, &discardLogger)
 			h.AssertNil(t, err)
 
 			previousImage = fakes.NewImage("image-repo-name", "", local.IDIdentifier{
 				ImageID: "s0m3D1g3sT",
 			})
-
-			discardLogger := log.Logger{Handler: &discard.Handler{}}
 
 			mockCtrl = gomock.NewController(t)
 
@@ -484,6 +483,7 @@ func testAnalyzer(platformAPI string) func(t *testing.T, when spec.G, it spec.S)
 
 					h.AssertEq(t, md.RunImage.Reference, "s0m3D1g3sT")
 				})
+
 				it("populates target metadata from the run image", func() {
 					h.AssertNil(t, previousImage.SetLabel("io.buildpacks.base.id", "id software"))
 					h.AssertNil(t, previousImage.SetOS("windows"))
@@ -507,6 +507,18 @@ func testAnalyzer(platformAPI string) func(t *testing.T, when spec.G, it spec.S)
 						h.AssertEq(t, md.RunImage.TargetMetadata.Distro.Name, "moobuntu")
 						h.AssertEq(t, md.RunImage.TargetMetadata.Distro.Version, "Helpful Holstein")
 					}
+				})
+
+				when("run image is missing OS", func() {
+					it("errors", func() {
+						h.AssertNil(t, previousImage.SetOS(""))
+						_, err := analyzer.Analyze()
+						if api.MustParse(platformAPI).LessThan("0.12") {
+							h.AssertNil(t, err)
+						} else {
+							h.AssertError(t, err, "failed to find OS")
+						}
+					})
 				})
 			})
 		})
