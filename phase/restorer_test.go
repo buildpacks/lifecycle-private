@@ -79,7 +79,7 @@ func testRestorer(buildpackAPI, platformAPI string) func(t *testing.T, when spec
 						{ID: "buildpack.id", API: buildpackAPI},
 						{ID: "escaped/buildpack/id", API: buildpackAPI},
 					},
-					LayerMetadataRestorer: layer.NewDefaultMetadataRestorer(layersDir, skipLayers, &logger),
+					LayerMetadataRestorer: layer.NewDefaultMetadataRestorer(layersDir, skipLayers, &logger, api.Platform.Latest()),
 					SBOMRestorer:          sbomRestorer,
 					PlatformAPI:           api.MustParse(platformAPI),
 				}

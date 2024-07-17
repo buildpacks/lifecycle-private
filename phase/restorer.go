@@ -38,7 +38,7 @@ func (r *Restorer) Restore(cache Cache) error {
 	}
 
 	if r.LayerMetadataRestorer == nil {
-		r.LayerMetadataRestorer = layer.NewDefaultMetadataRestorer(r.LayersDir, false, r.Logger)
+		r.LayerMetadataRestorer = layer.NewDefaultMetadataRestorer(r.LayersDir, false, r.Logger, r.PlatformAPI)
 	}
 
 	if r.SBOMRestorer == nil {
